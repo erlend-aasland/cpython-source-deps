@@ -1,0 +1,50 @@
+name: "Auto-update SQLite sources"
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+
+jobs:
+  upgrade:
+    name: "Upgrade SQLite sources"
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+          ref: sqlite
+
+      - name: "Get URL"
+        id: url
+        run: |
+          MAJOR=$(echo $VERSION | cut -d '.' -f 1)
+          MINOR=$(echo $VERSION | cut -d '.' -f 2)
+          PATCH=$(echo $VERSION | cut -d '.' -f 3)
+
+          # See https://sqlite.org/download.html
+          printf -v ENCODED_VERSION "%d%02d%02d00" $MAJOR $MINOR $PATCH
+          URL="https://sqlite.org/$YEAR/sqlite-amalgamation-${ENCODED_VERSION}.zip"
+          echo "::set-output name=url::$URL"
+
+      - name: "Download and extract SQLite amalgamation sources"
+        env:
+          URL: ${{ steps.url.outputs.url }}
+        run: |
+          curl -sO $URL
+
+          ARCHIVE=$(basename $URL)
+          unzip -o $ARCHIVE
+
+          DIR=$(basename $ARCHIVE .zip)
+          for _F in *.[ch]; do
+            cp -vf $DIR/$_F $_F
+          done
+
+          rm -rf $DIR
+
+      - name: "Create Pull Request"
+        uses: peter-evans/create-pull-request@v3
+        with:
+          commit-message: "Add SQLite $VERSION sources"
+          title: "Add SQLite $VERSION sources"
+          branch: sqlite-$VERSION
