@@ -14,16 +14,18 @@ jobs:
           fetch-depth: 1
           ref: sqlite
 
+      - name: "Get latest version"
+        id: version
+        uses: .github/actions/sqliteversion
+
       - name: "Get URL"
         id: url
+        env:
+          DATE: ${{ steps.version.outputs.date }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          MAJOR=$(echo $VERSION | cut -d '.' -f 1)
-          MINOR=$(echo $VERSION | cut -d '.' -f 2)
-          PATCH=$(echo $VERSION | cut -d '.' -f 3)
-
-          # See https://sqlite.org/download.html
-          printf -v ENCODED_VERSION "%d%02d%02d00" $MAJOR $MINOR $PATCH
-          URL="https://sqlite.org/$YEAR/sqlite-amalgamation-${ENCODED_VERSION}.zip"
+          YEAR=$(echo $DATE | cut -d '-' -f 1)
+          URL="https://sqlite.org/$YEAR/sqlite-amalgamation-${VERSION}.zip"
           echo "::set-output name=url::$URL"
 
       - name: "Download and extract SQLite amalgamation sources"
