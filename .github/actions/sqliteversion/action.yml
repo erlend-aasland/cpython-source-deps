@@ -1,0 +1,10 @@
+name: "Get SQLite version"
+description: "Get latest SQLite version information"
+outputs:
+  version:
+    description: "SQLite version"
+  date:
+    description: "Release date"
+runs:
+  using: "docker"
+  image: "Dockerfile"
